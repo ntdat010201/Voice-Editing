@@ -59,4 +59,11 @@ dependencies {
 
     implementation("com.google.oboe:oboe:1.8.0")
 
+    implementation ("androidx.media3:media3-exoplayer:1.8.0")
+    implementation ("androidx.media3:media3-ui:1.8.0")
+    implementation ("androidx.media3:media3-common:1.8.0")
+
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
+
+
 }

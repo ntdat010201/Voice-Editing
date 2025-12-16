@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".reverse_recording.ReverseRecordingActivity">
+
+    <TextView
+        android:id="@+id/add_file"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="6dp"
+        android:text="+"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/record"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="6dp"
+        android:text="ghi"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+         />
+
+    <TextView
+        android:id="@+id/time_record"
+        android:layout_marginTop="18dp"
+        app:layout_constraintEnd_toEndOf="@+id/record"
+        app:layout_constraintStart_toStartOf="@+id/record"
+        app:layout_constraintTop_toBottomOf="@+id/record"
+        android:textSize="12dp"
+        android:textColor="@color/black"
+        android:text="00:00"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/time_record"
+        android:id="@+id/play_and_pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="6dp"
+        android:text="play_and_pause"
+        android:textColor="@color/black"
+        android:textSize="20sp" />
+
+
+    <TextView
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/play_and_pause"
+        android:id="@+id/reverse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="6dp"
+        android:text="reverse_play"
+        android:textColor="@color/black"
+        android:textSize="20sp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

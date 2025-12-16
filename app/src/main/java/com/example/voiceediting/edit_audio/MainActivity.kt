@@ -1,5 +1,6 @@
 package com.example.voiceediting.edit_audio
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +15,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.voiceediting.databinding.ActivityMainBinding
 import com.example.voiceediting.edit_audio.permission.AudioPickerPermission
+import com.example.voiceediting.reverse_recording.ReverseRecordingActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             if (exoPlayer?.isPlaying == true) {
                 exoPlayer?.pause()
             }
-            audioPickerPermission.openPicker()  // Đổi tên hàm cho rõ
+            audioPickerPermission.openPicker()
         }
 
         binding.pause.setOnClickListener {
@@ -91,6 +93,10 @@ class MainActivity : AppCompatActivity() {
         binding.conTrai.setOnClickListener { applyPitchSmooth(0.8f) }
         binding.conGai.setOnClickListener { applyPitchSmooth(1.3f) }
         binding.treCon.setOnClickListener { applyPitchSmooth(1.6f) }
+
+        binding.reverse.setOnClickListener {
+            startActivity(Intent(this@MainActivity, ReverseRecordingActivity::class.java))
+        }
     }
 
     private fun applyPitch(pitch: Float) {

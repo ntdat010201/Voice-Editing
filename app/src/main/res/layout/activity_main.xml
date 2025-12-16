@@ -8,12 +8,81 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/add_file"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="6dp"
+        android:text="+"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:autoSizeTextType="uniform"
+        android:id="@+id/pause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="pause and play"
+        android:textColor="@color/black"
+        android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:autoSizeTextType="uniform"
+        android:id="@+id/con_trai"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="con trai"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pause"/>
+
+    <TextView
+        android:autoSizeTextType="uniform"
+        android:id="@+id/con_gai"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="con gai"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toEndOf="@+id/con_trai"
+        app:layout_constraintTop_toTopOf="@+id/con_trai"
+        app:layout_constraintBottom_toBottomOf="@+id/con_trai"
+        />
+
+    <TextView
+        android:autoSizeTextType="uniform"
+        android:id="@+id/tre_con"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="trẻ con"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toEndOf="@+id/con_gai"
+        app:layout_constraintTop_toTopOf="@+id/con_gai"
+        app:layout_constraintBottom_toBottomOf="@+id/con_gai"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

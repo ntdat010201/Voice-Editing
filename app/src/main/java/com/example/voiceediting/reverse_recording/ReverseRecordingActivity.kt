@@ -1,13 +1,11 @@
 package com.example.voiceediting.reverse_recording
 
-import android.annotation.SuppressLint
 import android.media.AudioAttributes
-import android.media.AudioFormat as AndroidAudioFormat
 import android.media.AudioTrack
 import android.media.MediaCodec
 import android.media.MediaExtractor
-import android.media.MediaRecorder
 import android.media.MediaFormat
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -21,10 +19,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.example.voiceediting.databinding.ActivityReverseRecordingBinding
 import com.example.voiceediting.edit_audio.permission.AudioPickerPermission
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.nio.ByteOrder
 import java.nio.ShortBuffer
+import java.text.SimpleDateFormat
+import java.util.Locale
+import android.media.AudioFormat as AndroidAudioFormat
 
 class ReverseRecordingActivity : AppCompatActivity() {
 
@@ -103,7 +102,7 @@ class ReverseRecordingActivity : AppCompatActivity() {
 
         // Nút phát / dừng bình thường
         binding.playAndPause.setOnClickListener {
-            if (audioFile?.exists() == true ||  exoPlayer?.currentMediaItem != null) {
+            if (audioFile?.exists() == true || exoPlayer?.currentMediaItem != null) {
                 if (isPlayingReverse) {
                     stopPlaying() // Dừng reverse trước nếu đang chạy
                 }
@@ -113,7 +112,7 @@ class ReverseRecordingActivity : AppCompatActivity() {
 
         // Nút phát ngược
         binding.reverse.setOnClickListener {
-            if (audioFile?.exists() == true ||  exoPlayer?.currentMediaItem!= null) {
+            if (audioFile?.exists() == true || exoPlayer?.currentMediaItem != null) {
                 if (isPlayingNormal) {
                     stopPlaying() // Dừng normal trước nếu đang chạy
                 }
@@ -149,7 +148,10 @@ class ReverseRecordingActivity : AppCompatActivity() {
 
     private fun stopRecording() {
         recorder?.apply {
-            try { stop() } catch (e: Exception) { /* ignore */ }
+            try {
+                stop()
+            } catch (e: Exception) { /* ignore */
+            }
             release()
         }
         recorder = null
@@ -216,7 +218,6 @@ class ReverseRecordingActivity : AppCompatActivity() {
         updatePlayButtonIcon()
     }
 
-    @SuppressLint("Range")
     private fun toggleReversePlay() {
         if (isPlayingReverse) {
             isPausedReverse = true
@@ -278,7 +279,8 @@ class ReverseRecordingActivity : AppCompatActivity() {
                 extractor.selectTrack(i)
                 reverseSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                 val channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                reverseChannelMask = if (channelCount == 1) AndroidAudioFormat.CHANNEL_OUT_MONO else AndroidAudioFormat.CHANNEL_OUT_STEREO
+                reverseChannelMask =
+                    if (channelCount == 1) AndroidAudioFormat.CHANNEL_OUT_MONO else AndroidAudioFormat.CHANNEL_OUT_STEREO
                 break
             }
         }
@@ -296,7 +298,13 @@ class ReverseRecordingActivity : AppCompatActivity() {
                 val inputBuffer = codec.getInputBuffer(inputIndex)!!
                 val size = extractor.readSampleData(inputBuffer, 0)
                 if (size < 0) {
-                    codec.queueInputBuffer(inputIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    codec.queueInputBuffer(
+                        inputIndex,
+                        0,
+                        0,
+                        0,
+                        MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                    )
                 } else {
                     codec.queueInputBuffer(inputIndex, 0, size, extractor.sampleTime, 0)
                     extractor.advance()
@@ -328,11 +336,13 @@ class ReverseRecordingActivity : AppCompatActivity() {
 
     private fun startReversePlayback() {
         val pcm = reversePcmFile ?: return
+
         val minBuf = AudioTrack.getMinBufferSize(
             reverseSampleRate,
             reverseChannelMask,
             AndroidAudioFormat.ENCODING_PCM_16BIT
         )
+
         reverseTrack = AudioTrack(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -345,34 +355,60 @@ class ReverseRecordingActivity : AppCompatActivity() {
                 .build(),
             minBuf,
             AudioTrack.MODE_STREAM,
-            AudioTrack.WRITE_NON_BLOCKING
-        ).apply { play() }
+            AudioTrack.WRITE_BLOCKING
+        )
 
+        reverseTrack?.play()
         isPausedReverse = false
+
         reverseWriteThread = Thread {
             val raf = java.io.RandomAccessFile(pcm, "r")
-            val blockSamples = minBuf / 2
-            var remaining = reverseTotalSamples
-            val byteBlock = ByteArray(blockSamples * 2)
-            while (!isPausedReverse && remaining > 0) {
-                val toReadSamples = if (remaining >= blockSamples) blockSamples else remaining.toInt()
-                val toReadBytes = toReadSamples * 2
-                val readPosBytes = (remaining - toReadSamples) * 2
+
+            val samplesPerBlock = minBuf / 2
+            val byteBlock = ByteArray(samplesPerBlock * 2)
+            var remainingSamples = reverseTotalSamples
+
+            while (!isPausedReverse && remainingSamples > 0) {
+                val readSamples =
+                    if (remainingSamples >= samplesPerBlock)
+                        samplesPerBlock
+                    else
+                        remainingSamples.toInt()
+
+                val readBytes = readSamples * 2
+                val readPosBytes = (remainingSamples - readSamples) * 2
+
                 raf.seek(readPosBytes)
-                val read = raf.read(byteBlock, 0, toReadBytes)
+                val read = raf.read(byteBlock, 0, readBytes)
                 if (read <= 0) break
-                val sb = java.nio.ByteBuffer.wrap(byteBlock, 0, read).order(ByteOrder.nativeOrder()).asShortBuffer()
-                val shorts = ShortArray(sb.remaining())
-                sb.get(shorts)
+
+                val shortBuf = java.nio.ByteBuffer
+                    .wrap(byteBlock, 0, read)
+                    .order(ByteOrder.nativeOrder())
+                    .asShortBuffer()
+
+                val shorts = ShortArray(shortBuf.remaining())
+                shortBuf.get(shorts)
+
+                if (reverseChannelMask == AndroidAudioFormat.CHANNEL_OUT_STEREO) {
+                    reverseStereo(shorts)
+                } else {
+                    reverseMono(shorts)
+                }
+
                 reverseTrack?.write(shorts, 0, shorts.size)
-                remaining -= toReadSamples
+                remainingSamples -= readSamples
             }
+
             raf.close()
-            isPlayingReverse = false
-            updateReverseButtonIcon()
             reverseTrack?.stop()
-        }.apply { start() }
+            isPlayingReverse = false
+            runOnUiThread { updateReverseButtonIcon() }
+        }
+
+        reverseWriteThread?.start()
     }
+
 
     private fun stopReversePlayback() {
         isPausedReverse = true
@@ -382,4 +418,27 @@ class ReverseRecordingActivity : AppCompatActivity() {
         reverseTrack?.release()
         reverseTrack = null
     }
+
+    private fun reverseMono(samples: ShortArray) {
+        samples.reverse()
+    }
+
+    private fun reverseStereo(samples: ShortArray) {
+        var i = 0
+        var j = samples.size - 2
+        while (i < j) {
+            val l1 = samples[i]
+            val r1 = samples[i + 1]
+
+            samples[i] = samples[j]
+            samples[i + 1] = samples[j + 1]
+
+            samples[j] = l1
+            samples[j + 1] = r1
+
+            i += 2
+            j -= 2
+        }
+    }
+
 }

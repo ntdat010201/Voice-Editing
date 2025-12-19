@@ -8,17 +8,16 @@
     tools:context=".edit_audio.MainActivity">
 
     <androidx.media3.ui.PlayerView
-        android:layout_marginVertical="30dp"
-        app:layout_constraintTop_toBottomOf="@+id/con_trai"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/add_file"
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginVertical="30dp"
         android:layout_weight="1"
-        app:use_controller="true"
-        />
+        app:layout_constraintBottom_toTopOf="@+id/add_file"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scroll_view"
+        app:use_controller="true" />
 
     <TextView
         android:id="@+id/add_file"
@@ -35,11 +34,11 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
-        android:autoSizeTextType="uniform"
         android:id="@+id/pause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="26dp"
+        android:autoSizeTextType="uniform"
         android:background="@drawable/bgr_circle"
         android:gravity="center"
         android:padding="16dp"
@@ -49,54 +48,220 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:autoSizeTextType="uniform"
-        android:id="@+id/con_trai"
-        android:layout_width="wrap_content"
+    <HorizontalScrollView
+        android:id="@+id/scroll_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="26dp"
-        android:background="@drawable/bgr_circle"
-        android:gravity="center"
-        android:padding="16dp"
-        android:text="con trai"
-        android:textColor="@color/black"
-        android:textSize="14sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pause"/>
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@+id/pause"
+        tools:ignore="MissingConstraints">
 
-    <TextView
-        android:autoSizeTextType="uniform"
-        android:id="@+id/con_gai"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bgr_circle"
-        android:gravity="center"
-        android:padding="16dp"
-        android:text="con gai"
-        android:textColor="@color/black"
-        android:textSize="14sp"
-        android:layout_marginStart="16dp"
-        app:layout_constraintStart_toEndOf="@+id/con_trai"
-        app:layout_constraintTop_toTopOf="@+id/con_trai"
-        app:layout_constraintBottom_toBottomOf="@+id/con_trai"
-        />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp">
 
-    <TextView
-        android:autoSizeTextType="uniform"
-        android:id="@+id/tre_con"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bgr_circle"
-        android:gravity="center"
-        android:padding="16dp"
-        android:text="trẻ con"
-        android:textColor="@color/black"
-        android:textSize="14sp"
-        android:layout_marginStart="16dp"
-        app:layout_constraintStart_toEndOf="@+id/con_gai"
-        app:layout_constraintTop_toTopOf="@+id/con_gai"
-        app:layout_constraintBottom_toBottomOf="@+id/con_gai"
-        />
+            <TextView
+                android:id="@+id/con_trai"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="con trai"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/con_gai"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="con gai"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tre_con"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="trẻ con"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/khiHelium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="khi Helium"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tiengOng"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="tiếng Ong"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/quaiVat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="quaiVat"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/khongLo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="khongLo"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/quyDu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="quyDu"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tuThan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="tuThan"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tamLinh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="tamLinh"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/nguoiNgoaiHanhTinh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="nguoiNgoaiHanhTinh"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/dienThoai"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="dienThoai"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/duoiNuoc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="duoiNuoc"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/robot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="robot"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/quat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:autoSizeTextType="uniform"
+                android:background="@drawable/bgr_circle"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="quat"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
+
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
 
     <TextView
         android:id="@+id/reverse"

@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
@@ -14,6 +18,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VoiceEditing"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.MainPermission"
+            android:exported="false" />
+        <activity
+            android:name=".ui.ShowActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.VideoActivity"
+            android:exported="false" />
         <activity
             android:name=".reverse_recording.ReverseRecordingActivity"
             android:exported="false" />

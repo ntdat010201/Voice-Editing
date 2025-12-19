@@ -1,5 +1,3 @@
-import javax.swing.text.View
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -59,11 +57,16 @@ dependencies {
 
     implementation("com.google.oboe:oboe:1.8.0")
 
-    implementation ("androidx.media3:media3-exoplayer:1.8.0")
-    implementation ("androidx.media3:media3-ui:1.8.0")
-    implementation ("androidx.media3:media3-common:1.8.0")
+    implementation("androidx.media3:media3-exoplayer:1.8.0")
+    implementation("androidx.media3:media3-ui:1.8.0")
+    implementation("androidx.media3:media3-common:1.8.0")
 
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
+    // lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
+    //viewmodel + livedata
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
 
-
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

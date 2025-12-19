@@ -6,9 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.util.UnstableApi
@@ -16,7 +14,9 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.example.voiceediting.databinding.ActivityMainBinding
 import com.example.voiceediting.edit_audio.permission.AudioPickerPermission
 import com.example.voiceediting.reverse_recording.ReverseRecordingActivity
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -26,6 +26,10 @@ class MainActivity : AppCompatActivity() {
     private var exoPlayer: ExoPlayer? = null
     private var isPaused = false
     private var currentPitch: Float = 1.0f
+
+    private var currentVolume: Float = 1.0f
+    private var fanJob: Job? = null
+    private var effectJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,16 +53,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun playMedia(uri: Uri) {
-        // Dừng nếu đang phát
+        // 1. Dừng nếu đang phát
         exoPlayer?.stop()
+
+        // 2. QUAN TRỌNG: Hủy ngay hiệu ứng Quạt nếu đang chạy từ bài trước
+        fanJob?.cancel()
 
         val mediaItem = MediaItem.fromUri(uri)
         exoPlayer?.setMediaItem(mediaItem)
         exoPlayer?.prepare()
 
-        // QUAN TRỌNG: Reset về giọng gốc trước khi phát
+        // 3. Reset toàn bộ về giọng gốc sạch sẽ
         currentPitch = 1.0f
-        applyPitch(1.0f)  // Đảm bảo pitch = 1.0f
+        currentVolume = 1.0f
+
+        // Áp dụng trực tiếp thông số gốc cho ExoPlayer
+        exoPlayer?.playbackParameters = PlaybackParameters(1.0f, 1.0f) // Reset Speed & Pitch
+        exoPlayer?.volume = 1.0f // Reset Volume
 
         exoPlayer?.play()
         isPaused = false
@@ -90,46 +101,98 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.conTrai.setOnClickListener { applyPitchSmooth(0.8f) }
-        binding.conGai.setOnClickListener { applyPitchSmooth(1.3f) }
-        binding.treCon.setOnClickListener { applyPitchSmooth(1.6f) }
-
+        binding.conTrai.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.9f, targetSpeed = 1.0f, targetVolume = 1.0f)
+        }
+        binding.conGai.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.25f, targetSpeed = 1.0f, targetVolume = 1.0f)
+        }
+        binding.treCon.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.5f, targetSpeed = 1.05f, targetVolume = 1.0f)
+        }
+        binding.khiHelium.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.8f, targetSpeed = 1.05f, targetVolume = 1.0f)
+        }
+        binding.tiengOng.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.9f, targetSpeed = 1.2f, targetVolume = 0.95f)
+        }
+        binding.quaiVat.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.65f, targetSpeed = 0.9f, targetVolume = 1.1f)
+        }
+        binding.khongLo.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.7f, targetSpeed = 0.9f, targetVolume = 1.2f)
+        }
+        binding.quyDu.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.6f, targetSpeed = 0.85f, targetVolume = 1.0f)
+        }
+        binding.tuThan.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.6f, targetSpeed = 0.8f, targetVolume = 1.0f)
+        }
+        binding.tamLinh.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.85f, targetSpeed = 0.9f, targetVolume = 0.75f)
+        }
+        binding.nguoiNgoaiHanhTinh.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.6f, targetSpeed = 1.15f, targetVolume = 0.9f)
+        }
+        binding.dienThoai.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.1f, targetSpeed = 1.0f, targetVolume = 0.65f)
+        }
+        binding.duoiNuoc.setOnClickListener {
+            applyVoiceEffect(targetPitch = 0.85f, targetSpeed = 0.9f, targetVolume = 0.6f)
+        }
+        binding.robot.setOnClickListener {
+            applyVoiceEffect(targetPitch = 1.0f, targetSpeed = 1.0f, targetVolume = 1.0f)
+        }
+        binding.quat.setOnClickListener {
+            applyVoiceEffect(
+                targetPitch = 1.05f,
+                targetSpeed = 1.0f,
+                targetVolume = 1.0f,
+                isFanEffect = true
+            )
+        }
         binding.reverse.setOnClickListener {
             startActivity(Intent(this@MainActivity, ReverseRecordingActivity::class.java))
         }
     }
 
-    private fun applyPitch(pitch: Float) {
-        currentPitch = pitch
-        val params = PlaybackParameters(1.0f, pitch)  // speed=1.0 để video không nhanh/chậm
-        exoPlayer?.playbackParameters = params
-    }
+    private fun applyVoiceEffect(
+        targetPitch: Float, //Độ cao giọng nói
+        targetSpeed: Float = 1.0f, //Tốc độ phát
+        targetVolume: Float = 1.0f, //Cường độ/Âm lượng/to nhỏ
+        isFanEffect: Boolean = false, //Hiệu ứng Quạt
+    ) {
+        // 1. Hủy cả job quạt và job chuyển đổi đang chạy
+        fanJob?.cancel()
+        effectJob?.cancel()
 
-    private fun applyPitchSmooth(targetPitch: Float, durationMs: Int = 300) {
-        // Nếu đang cùng pitch thì bỏ qua
-        if (currentPitch == targetPitch) return
+        // Cập nhật thông số hiện tại
+        currentPitch = targetPitch
+        currentVolume = targetVolume
 
-        val startPitch = currentPitch
-        val startTime = System.currentTimeMillis()
+        // Áp dụng ngay lập tức (Synchronous) - Tránh spam coroutine khi click nhanh
+        exoPlayer?.playbackParameters = PlaybackParameters(targetSpeed, targetPitch)
+        exoPlayer?.volume = targetVolume
 
-        // Dùng coroutine + repeatOnLifecycle để tự động cancel khi destroy
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                var elapsed: Long
-                var progress: Float
+        // 2. Xử lý hiệu ứng Quạt (Vibrato) nếu có
+        if (isFanEffect) {
+            fanJob = lifecycleScope.launch {
+                try {
+                    while (isActive) {
+                        exoPlayer?.volume = targetVolume * 0.3f
+                        exoPlayer?.playbackParameters =
+                            PlaybackParameters(targetSpeed, targetPitch - 0.03f)
+                        delay(45)
 
-                do {
-                    elapsed = System.currentTimeMillis() - startTime
-                    progress = (elapsed.toFloat() / durationMs).coerceAtMost(1f)
-
-                    val interpolatedPitch = startPitch + (targetPitch - startPitch) * progress
-                    exoPlayer?.playbackParameters = PlaybackParameters(1.0f, interpolatedPitch)
-
-                    delay(16)  // ~60fps, mượt mà
-                } while (progress < 1f)
-
-                // Kết thúc transition
-                currentPitch = targetPitch
+                        exoPlayer?.volume = targetVolume
+                        exoPlayer?.playbackParameters = PlaybackParameters(targetSpeed, targetPitch)
+                        delay(45)
+                    }
+                } finally {
+                    // Đảm bảo trả về trạng thái chuẩn khi bị hủy
+                    exoPlayer?.volume = targetVolume
+                    exoPlayer?.playbackParameters = PlaybackParameters(targetSpeed, targetPitch)
+                }
             }
         }
     }
@@ -141,6 +204,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        fanJob?.cancel()
+        effectJob?.cancel()
         exoPlayer?.release()
         exoPlayer = null
     }

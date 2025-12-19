@@ -1,5 +1,6 @@
 package com.example.voiceediting.reverse_recording
 
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioTrack
 import android.media.MediaCodec
@@ -18,6 +19,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.voiceediting.databinding.ActivityReverseRecordingBinding
 import com.example.voiceediting.edit_audio.permission.AudioPickerPermission
+import com.example.voiceediting.ui.MainPermission
 import java.io.File
 import java.nio.ByteOrder
 import java.nio.ShortBuffer
@@ -124,6 +126,10 @@ class ReverseRecordingActivity : AppCompatActivity() {
         binding.addFile.setOnClickListener {
             audioPickerPermission.openPicker()
         }
+
+        binding.mainPermission.setOnClickListener {
+            startActivity(Intent(this@ReverseRecordingActivity, MainPermission::class.java))
+        }
     }
 
     private fun startRecording() {
@@ -132,6 +138,12 @@ class ReverseRecordingActivity : AppCompatActivity() {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+                //set chất lượng
+                setAudioEncodingBitRate(128_000)
+                setAudioSamplingRate(44_100)
+                setAudioChannels(1)
+
                 setOutputFile(audioFile?.absolutePath)
                 prepare()
                 start()
@@ -150,7 +162,8 @@ class ReverseRecordingActivity : AppCompatActivity() {
         recorder?.apply {
             try {
                 stop()
-            } catch (e: Exception) { /* ignore */
+            } catch (e: Exception) {
+                Log.e("Record", "Stop failed", e)
             }
             release()
         }
@@ -158,6 +171,11 @@ class ReverseRecordingActivity : AppCompatActivity() {
         isRecording = false
         binding.record.text = "ghi"
         handler.removeCallbacks(updateTimerRunnable)
+
+        // THÊM DÒNG NÀY: Nạp file vừa ghi vào Player ngay lập tức
+        if (audioFile?.exists() == true) {
+            preparePlayerFromFile(normal = true)
+        }
     }
 
     private fun startTimer() {
@@ -178,7 +196,7 @@ class ReverseRecordingActivity : AppCompatActivity() {
         binding.timeRecord.text = timeFormatter.format(millis)
     }
 
-    private fun preparePlayerFromFile(normal: Boolean) {
+    /*private fun preparePlayerFromFile(normal: Boolean) {
         audioFile?.let {
             val mediaItem = MediaItem.fromUri(Uri.fromFile(it))
             exoPlayer?.setMediaItem(mediaItem)
@@ -186,6 +204,25 @@ class ReverseRecordingActivity : AppCompatActivity() {
             if (normal) {
                 exoPlayer?.playbackParameters = PlaybackParameters(1f) // Normal speed
             }
+        }
+    }*/
+
+    private fun preparePlayerFromFile(normal: Boolean) {
+        audioFile?.let {
+            if (!it.exists()) return
+
+            // Tạo MediaItem từ file
+            val mediaItem = MediaItem.fromUri(Uri.fromFile(it))
+            exoPlayer?.setMediaItem(mediaItem)
+            exoPlayer?.prepare() // Chuẩn bị sẵn sàng
+
+            if (normal) {
+                exoPlayer?.playbackParameters = PlaybackParameters(1f)
+            }
+
+            // Xóa file PCM cũ (nếu có) để khi nhấn Reverse nó sẽ giải mã lại từ file mới ghi
+            reversePcmFile?.delete()
+            reverseTotalSamples = 0
         }
     }
 
@@ -223,15 +260,42 @@ class ReverseRecordingActivity : AppCompatActivity() {
             isPausedReverse = true
             reverseTrack?.pause()
             isPlayingReverse = false
+            updateReverseButtonIcon()
         } else {
-            ensureReverseBufferReady()
-            startReversePlayback()
-            isPlayingReverse = true
-            isPlayingNormal = false
-            updatePlayButtonIcon()
+            // 1. Hiện ProgressBar và vô hiệu hóa nút bấm để tránh bấm chồng lên nhau
+            binding.loadingLayout.visibility = android.view.View.VISIBLE
+            binding.reverse.isEnabled = false
+
+            // 2. Lấy URI an toàn trên Main Thread
+            val uriToProcess = exoPlayer?.currentMediaItem?.localConfiguration?.uri
+                ?: audioFile?.takeIf { it.exists() }?.let { Uri.fromFile(it) }
+
+            // 3. Chạy luồng phụ (Thread) để giải mã file
+            Thread {
+                try {
+                    ensureReverseBufferReady(uriToProcess)
+
+                    // 4. Xử lý xong, quay lại Main Thread để ẩn Progress và phát nhạc
+                    runOnUiThread {
+                        binding.loadingLayout.visibility = android.view.View.GONE
+                        binding.reverse.isEnabled = true
+
+                        startReversePlayback()
+                        isPlayingReverse = true
+                        isPlayingNormal = false
+                        updatePlayButtonIcon()
+                        updateReverseButtonIcon()
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        binding.loadingLayout.visibility = android.view.View.GONE
+                        binding.reverse.isEnabled = true
+                    }
+                }
+            }.start()
         }
-        updateReverseButtonIcon()
     }
+
 
     private fun stopPlaying() {
         exoPlayer?.stop()
@@ -263,75 +327,86 @@ class ReverseRecordingActivity : AppCompatActivity() {
         stopReversePlayback()
     }
 
-    private fun ensureReverseBufferReady() {
+    private fun ensureReverseBufferReady(uri: Uri?) {
+        // Nếu file PCM đã tồn tại và đã xử lý rồi thì bỏ qua
         if (reversePcmFile?.exists() == true && reverseTotalSamples > 0) return
-        val sourceUri: Uri = exoPlayer?.currentMediaItem?.localConfiguration?.uri
-            ?: audioFile?.takeIf { it.exists() }?.let { Uri.fromFile(it) }
-            ?: return
+
+        // Sử dụng Uri được truyền vào từ tham số
+        val sourceUri = uri ?: return
+
         val extractor = MediaExtractor()
-        extractor.setDataSource(this, sourceUri, null)
-        var audioTrackIndex = -1
-        for (i in 0 until extractor.trackCount) {
-            val format = extractor.getTrackFormat(i)
-            val mime = format.getString(MediaFormat.KEY_MIME) ?: continue
-            if (mime.startsWith("audio/")) {
-                audioTrackIndex = i
-                extractor.selectTrack(i)
-                reverseSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                val channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                reverseChannelMask =
-                    if (channelCount == 1) AndroidAudioFormat.CHANNEL_OUT_MONO else AndroidAudioFormat.CHANNEL_OUT_STEREO
-                break
-            }
-        }
-        val format = extractor.getTrackFormat(audioTrackIndex)
-        val codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
-        codec.configure(format, null, null, 0)
-        codec.start()
-        reversePcmFile = File(cacheDir, "reverse_pcm.pcm")
-        val fos = reversePcmFile!!.outputStream().buffered()
-        val bufferInfo = MediaCodec.BufferInfo()
-        var totalWrittenBytes: Long = 0
-        while (true) {
-            val inputIndex = codec.dequeueInputBuffer(10000)
-            if (inputIndex >= 0) {
-                val inputBuffer = codec.getInputBuffer(inputIndex)!!
-                val size = extractor.readSampleData(inputBuffer, 0)
-                if (size < 0) {
-                    codec.queueInputBuffer(
-                        inputIndex,
-                        0,
-                        0,
-                        0,
-                        MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                    )
-                } else {
-                    codec.queueInputBuffer(inputIndex, 0, size, extractor.sampleTime, 0)
-                    extractor.advance()
+        try {
+            extractor.setDataSource(this, sourceUri, null)
+            var audioTrackIndex = -1
+
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(MediaFormat.KEY_MIME) ?: continue
+                if (mime.startsWith("audio/")) {
+                    audioTrackIndex = i
+                    extractor.selectTrack(i)
+                    reverseSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+                    val channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                    reverseChannelMask =
+                        if (channelCount == 1) AndroidAudioFormat.CHANNEL_OUT_MONO else AndroidAudioFormat.CHANNEL_OUT_STEREO
+                    break
                 }
             }
-            val outputIndex = codec.dequeueOutputBuffer(bufferInfo, 10000)
-            if (outputIndex >= 0) {
-                val outBuf = codec.getOutputBuffer(outputIndex)!!
-                outBuf.order(ByteOrder.nativeOrder())
-                val shortCount = bufferInfo.size / 2
-                val sb: ShortBuffer = outBuf.asShortBuffer()
-                val tmp = ShortArray(shortCount)
-                sb.get(tmp)
-                val bb = java.nio.ByteBuffer.allocate(shortCount * 2).order(ByteOrder.nativeOrder())
-                bb.asShortBuffer().put(tmp)
-                fos.write(bb.array())
-                totalWrittenBytes += (shortCount * 2).toLong()
-                codec.releaseOutputBuffer(outputIndex, false)
-                if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
+            val format = extractor.getTrackFormat(audioTrackIndex)
+            val codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
+            codec.configure(format, null, null, 0)
+            codec.start()
+            reversePcmFile = File(cacheDir, "reverse_pcm.pcm")
+            val fos = reversePcmFile!!.outputStream().buffered()
+            val bufferInfo = MediaCodec.BufferInfo()
+            var totalWrittenBytes: Long = 0
+            while (true) {
+                val inputIndex = codec.dequeueInputBuffer(10000)
+                if (inputIndex >= 0) {
+                    val inputBuffer = codec.getInputBuffer(inputIndex)!!
+                    val size = extractor.readSampleData(inputBuffer, 0)
+                    if (size < 0) {
+                        codec.queueInputBuffer(
+                            inputIndex,
+                            0,
+                            0,
+                            0,
+                            MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                        )
+                    } else {
+                        codec.queueInputBuffer(inputIndex, 0, size, extractor.sampleTime, 0)
+                        extractor.advance()
+                    }
+                }
+                val outputIndex = codec.dequeueOutputBuffer(bufferInfo, 10000)
+                if (outputIndex >= 0) {
+                    val outBuf = codec.getOutputBuffer(outputIndex)!!
+                    outBuf.order(ByteOrder.nativeOrder())
+                    val shortCount = bufferInfo.size / 2
+                    val sb: ShortBuffer = outBuf.asShortBuffer()
+                    val tmp = ShortArray(shortCount)
+                    sb.get(tmp)
+                    val bb =
+                        java.nio.ByteBuffer.allocate(shortCount * 2).order(ByteOrder.nativeOrder())
+                    bb.asShortBuffer().put(tmp)
+                    fos.write(bb.array())
+                    totalWrittenBytes += (shortCount * 2).toLong()
+                    codec.releaseOutputBuffer(outputIndex, false)
+                    if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
+                }
             }
+            fos.flush()
+            fos.close()
+            codec.stop()
+            codec.release()
+            extractor.release()
+            reverseTotalSamples = totalWrittenBytes / 2
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            extractor.release()
         }
-        fos.flush()
-        fos.close()
-        codec.stop()
-        codec.release()
-        extractor.release()
-        reverseTotalSamples = totalWrittenBytes / 2
     }
 
     private fun startReversePlayback() {

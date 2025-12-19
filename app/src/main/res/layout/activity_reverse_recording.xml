@@ -32,27 +32,23 @@
         android:text="ghi"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-         />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/time_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
+        android:text="00:00"
+        android:textColor="@color/black"
+        android:textSize="12dp"
         app:layout_constraintEnd_toEndOf="@+id/record"
         app:layout_constraintStart_toStartOf="@+id/record"
-        app:layout_constraintTop_toBottomOf="@+id/record"
-        android:textSize="12dp"
-        android:textColor="@color/black"
-        android:text="00:00"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        app:layout_constraintTop_toBottomOf="@+id/record" />
 
     <TextView
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/time_record"
         android:id="@+id/play_and_pause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -62,13 +58,13 @@
         android:padding="6dp"
         android:text="play_and_pause"
         android:textColor="@color/black"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/time_record" />
 
 
     <TextView
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/play_and_pause"
         android:id="@+id/reverse"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -78,7 +74,39 @@
         android:padding="6dp"
         android:text="reverse_play"
         android:textColor="@color/black"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/play_and_pause" />
 
+    <TextView
+        android:id="@+id/mainPermission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="26dp"
+        android:background="@drawable/bgr_circle"
+        android:gravity="center"
+        android:padding="6dp"
+        android:text="permission"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+
+    <FrameLayout
+        android:id="@+id/loading_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
